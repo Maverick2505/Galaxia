@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>14 De Febrero ✨</title>
+  <style>
+    *{ margin:0; padding:0; box-sizing:border-box; }
+    html, body{
+      width:100%;
+      height:100%;
+      overflow:hidden;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(1200px 800px at 70% 20%, #0a0f2a, #02030a);
+      color:#fff;
+    }
+    #scene{ position: fixed; inset:0; width:100%; height:100%; display:block; }
+    .hint{
+      position: fixed;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 5;
+      pointer-events:none;
+      font-size: 12px;
+      color: rgba(255,255,255,0.55);
+      text-shadow: 0 0 12px rgba(0,0,0,0.65);
+      text-align:center;
+      padding: 0 12px;
+      line-height: 1.3;
+    }
+    .vignette{
+      position: fixed;
+      inset: 0;
+      pointer-events:none;
+      background: radial-gradient(circle at center, rgba(0,0,0,0) 45%, rgba(0,0,0,0.55) 100%);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="hint">
+    Arrastra para rotar<br>
+  </div>
+
+  <canvas id="scene"></canvas>
+  <div class="vignette"></div>
+
+  <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+
+  <script>
+    const canvas = document.getElementById("scene");
+
+    const PHRASES = [
+      "Eres mi lugar favorito en el universo ✨",
+      "Contigo, todo se siente posible ⭐",
+      "Tu risa es mi constelación favorita 🌙",
+      "Si me pierdo, que sea en tus ojos 🌌",
+      "Te elegiría incluso sin destino 💫",
+      "Tu voz se siente hogar",
+      "Siempre tú, en todas partes",
+      "Eres mi paz con luces",
+      "Si es contigo, sí",
+      "Qué bonito encontrarte",
+      "Mi universo tiene tu nombre",
+      "Te pienso bonito",
+      "Eres mi estrella fija",
+      "Eres la calma que no sabía pedir",
+      "Me gustas en todos los idiomas",
+      "Contigo, el tiempo se vuelve suave",
+      "Tú eres mi mejor casualidad",
+      "Eres mi sí más bonito",
+      "Me encanta tu existencia",
+      "Tu mirada tiene magia",
+      "Eres mi canción favorita",
+      "Yo te elijo, sin prisa",
+      "Te quiero cerca, siempre",
+      "Eres un abrazo en forma de persona",
+      "Contigo todo se siente más bonito",
+      "Eres mi suerte favorita",
+      "Tu amor me queda perfecto",
+      "Eres luz cuando todo se apaga",
+      "Me haces creer en lo bonito",
+      "Eres mi galaxia favorita",
+      "Me gustas más de lo que digo",
+      "Eres mi lugar seguro",
+      "Contigo no me pierdo",
+      "Eres mi constelación",
+      "Tu nombre suena a hogar",
+      "Me haces sonreír sin darme cuenta",
+      "Eres mi paz favorita",
+      "Tú y yo, siempre",
+      "Me encanta tu forma de existir",
+      "Si es contigo, vale todo",
+      "Eres mi estrella más brillante",
+      "Me haces sentir en casa",
+      "Eres mi mejor parte",
+      "Tú eres mi universo",
+      "Te quiero bonito",
+      "Me gustas sin medida",
+      "Eres mi destino favorito",
+      "Eres mi magia diaria",
+      "Tu amor se siente infinito",
+      "Eres mi cielo personal",
+      "Frase random",
+      "Frase random",
+      "Frase random",
+      "Frase random",
+      "Frase random",
+      "Frase random",
+      "Frase random",
+      "Frase random",
+      "Frase random",
+      "Frase random",
+      "Frase random",
+      "Frase random",
+    ];
+
+    // ---------------------------
+    //  Three.js setup
+    // ---------------------------
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    const scene = new THREE.Scene();
+
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 4000);
+    camera.position.set(0, 10, 150);
+
+    scene.add(new THREE.AmbientLight(0xffffff, 1));
+
+    const galaxy = new THREE.Group();
+    scene.add(galaxy);
+
+    // ---------------------------
+    //  Stars
+    // ---------------------------
+    const STAR_COUNT = 2400;
+    const positions = new Float32Array(STAR_COUNT * 3);
+    const colors = new Float32Array(STAR_COUNT * 3);
+
+    for(let i=0; i<STAR_COUNT; i++){
+      const i3 = i * 3;
+
+      const r = Math.pow(Math.random(), 0.58) * 220;
+      const angle = Math.random() * Math.PI * 2;
+      const spin = r * 0.05;
+      const y = (Math.random() - 0.5) * 28;
+
+      const x = Math.cos(angle + spin) * r;
+      const z = Math.sin(angle + spin) * r;
+
+      positions[i3 + 0] = x;
+      positions[i3 + 1] = y;
+      positions[i3 + 2] = z;
+
+      colors[i3 + 0] = 0.78 + Math.random() * 0.22;
+      colors[i3 + 1] = 0.85 + Math.random() * 0.15;
+      colors[i3 + 2] = 0.88 + Math.random() * 0.12;
+    }
+
+    const starGeo = new THREE.BufferGeometry();
+    starGeo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+    starGeo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+
+    const starMat = new THREE.PointsMaterial({
+      size: 1.0,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.95,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending
+    });
+
+    const starPoints = new THREE.Points(starGeo, starMat);
+    galaxy.add(starPoints);
+
+    // Nebula glow
+    const fogGeo = new THREE.SphereGeometry(320, 32, 32);
+    const fogMat = new THREE.MeshBasicMaterial({
+      color: 0x4a86ff,
+      transparent: true,
+      opacity: 0.05,
+      blending: THREE.AdditiveBlending,
+      side: THREE.BackSide
+    });
+    scene.add(new THREE.Mesh(fogGeo, fogMat));
+
+    // ---------------------------
+    //  Text Sprites (phrases)
+    // ---------------------------
+    function roundRect(ctx, x, y, w, h, r){
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    function makeTextSprite(message){
+      const c = document.createElement("canvas");
+      const ctx = c.getContext("2d");
+
+      // Tamaño pequeño para que no tape
+      const fontSize = 22;
+      ctx.font = `600 ${fontSize}px Arial`;
+
+      const paddingX = 16;
+      const paddingY = 10;
+      const textWidth = ctx.measureText(message).width;
+
+      c.width = Math.ceil(textWidth + paddingX * 2);
+      c.height = Math.ceil(fontSize + paddingY * 2);
+
+      ctx.font = `600 ${fontSize}px Arial`;
+
+      // fondo MUY sutil (casi invisible)
+      ctx.fillStyle = "rgba(255,255,255,0.035)";
+      roundRect(ctx, 0, 0, c.width, c.height, 14);
+      ctx.fill();
+
+      // borde suave
+      ctx.strokeStyle = "rgba(255,255,255,0.10)";
+      ctx.lineWidth = 2;
+      roundRect(ctx, 1, 1, c.width-2, c.height-2, 14);
+      ctx.stroke();
+
+      // texto
+      ctx.fillStyle = "rgba(255,255,255,0.90)";
+      ctx.textBaseline = "middle";
+      ctx.fillText(message, paddingX, c.height/2);
+
+      const texture = new THREE.CanvasTexture(c);
+      texture.minFilter = THREE.LinearFilter;
+      texture.magFilter = THREE.LinearFilter;
+
+      const material = new THREE.SpriteMaterial({
+        map: texture,
+        transparent: true,
+        opacity: 0.85,
+        depthWrite: false
+      });
+
+      const sprite = new THREE.Sprite(material);
+
+      // Escala pequeña
+      const base = 0.055;
+      sprite.scale.set(c.width * base, c.height * base, 1);
+
+      return sprite;
+    }
+
+    const phraseGroup = new THREE.Group();
+    galaxy.add(phraseGroup);
+
+    PHRASES.forEach((text, idx) => {
+      const sprite = makeTextSprite(text);
+
+      // Las ponemos en un anillo para que no se amontonen
+      const r = 90 + Math.random() * 140;
+      const angle = (idx / PHRASES.length) * Math.PI * 2 + (Math.random() * 0.35);
+      const y = (Math.random() - 0.5) * 30;
+
+      sprite.position.set(
+        Math.cos(angle) * r,
+        y,
+        Math.sin(angle) * r
+      );
+
+      phraseGroup.add(sprite);
+    });
+
+    // ---------------------------
+    //  User controls (drag rotate + zoom)
+    // ---------------------------
+    let isDragging = false;
+    let lastX = 0, lastY = 0;
+
+    let targetRotY = 0;
+    let targetRotX = 0;
+
+    // Zoom control
+    let targetZ = camera.position.z;
+    const MIN_Z = 60;
+    const MAX_Z = 280;
+
+    function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
+
+    // ---------------------------
+    //  Auto-rotation control (PAUSE while dragging)
+    // ---------------------------
+    let autoRotate = true;
+    let lastUserInteraction = performance.now();
+    const RESUME_DELAY = 900; // ms (tiempo para reanudar después de soltar)
+
+    function markInteraction(){
+      lastUserInteraction = performance.now();
+      autoRotate = false;
+    }
+
+    function onDown(x, y){
+      isDragging = true;
+      lastX = x;
+      lastY = y;
+      markInteraction();
+    }
+
+    function onMove(x, y){
+      if(!isDragging) return;
+
+      const dx = x - lastX;
+      const dy = y - lastY;
+
+      lastX = x;
+      lastY = y;
+
+      // sensibilidad
+      targetRotY += dx * 0.005;
+      targetRotX += dy * 0.003;
+
+      // límite vertical
+      targetRotX = clamp(targetRotX, -0.7, 0.7);
+
+      markInteraction();
+    }
+
+    function onUp(){
+      isDragging = false;
+      markInteraction();
+    }
+
+    // Mouse
+    window.addEventListener("mousedown", (e) => onDown(e.clientX, e.clientY));
+    window.addEventListener("mousemove", (e) => onMove(e.clientX, e.clientY));
+    window.addEventListener("mouseup", onUp);
+    window.addEventListener("mouseleave", onUp);
+
+    // Touch
+    window.addEventListener("touchstart", (e) => {
+      if(!e.touches || !e.touches[0]) return;
+      onDown(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive:true });
+
+    window.addEventListener("touchmove", (e) => {
+      if(!e.touches || !e.touches[0]) return;
+      onMove(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive:true });
+
+    window.addEventListener("touchend", onUp);
+
+    // Mouse wheel zoom
+    window.addEventListener("wheel", (e) => {
+      targetZ += e.deltaY * 0.08;
+      targetZ = clamp(targetZ, MIN_Z, MAX_Z);
+      markInteraction();
+    }, { passive:true });
+
+    // Pinch zoom (2 dedos)
+    let lastPinchDist = null;
+
+    window.addEventListener("touchmove", (e) => {
+      if(!e.touches || e.touches.length !== 2) {
+        lastPinchDist = null;
+        return;
+      }
+
+      const t0 = e.touches[0];
+      const t1 = e.touches[1];
+
+      const dx = t0.clientX - t1.clientX;
+      const dy = t0.clientY - t1.clientY;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+
+      if(lastPinchDist !== null){
+        const delta = dist - lastPinchDist;
+        targetZ -= delta * 0.15; // sensibilidad pinch
+        targetZ = clamp(targetZ, MIN_Z, MAX_Z);
+        markInteraction();
+      }
+
+      lastPinchDist = dist;
+    }, { passive:true });
+
+    // ---------------------------
+    //  Animate
+    // ---------------------------
+    const clock = new THREE.Clock();
+
+    function animate(){
+      const t = clock.getElapsedTime();
+
+      // Reanudar auto-rotación después de un tiempo sin interacción
+      if(!isDragging){
+        const now = performance.now();
+        if(now - lastUserInteraction > RESUME_DELAY){
+          autoRotate = true;
+        }
+      }
+
+      // Auto-rotación MUY lenta (solo si no estás interactuando)
+      if(autoRotate && !isDragging){
+        targetRotY += 0.0006; // velocidad lenta
+        targetRotX += Math.sin(t * 0.2) * 0.00002; // micro movimiento
+      }
+
+      // No hay rotación automática directa, solo suavizado hacia el target
+      galaxy.rotation.y += (targetRotY - galaxy.rotation.y) * 0.08;
+      galaxy.rotation.x += (targetRotX - galaxy.rotation.x) * 0.08;
+
+      // Zoom suave
+      camera.position.z += (targetZ - camera.position.z) * 0.12;
+
+      // brillo leve
+      starMat.opacity = 0.92 + Math.sin(t * 1.1) * 0.04;
+
+      renderer.render(scene, camera);
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+
+    // Resize
+    window.addEventListener("resize", () => {
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+    });
+  </script>
+</body>
+</html>
