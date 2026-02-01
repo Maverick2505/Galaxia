@@ -41,6 +41,7 @@
 <body>
   <div class="hint">
     Arrastra para rotar<br>
+    (y haz zoom con scroll o pellizco)
   </div>
 
   <canvas id="scene"></canvas>
@@ -102,18 +103,20 @@
       "Eres mi magia diaria",
       "Tu amor se siente infinito",
       "Eres mi cielo personal",
-      "Frase random",
-      "Frase random",
-      "Frase random",
-      "Frase random",
-      "Frase random",
-      "Frase random",
-      "Frase random",
-      "Frase random",
-      "Frase random",
-      "Frase random",
-      "Frase random",
-      "Frase random",
+    ];
+
+    // ---------------------------
+    //  FOTO SPRITES (tus imágenes)
+    // ---------------------------
+    const PHOTO_URLS = [
+      "img/1.png",
+      "img/2.png",
+      "img/3.png",
+      "img/4.png",
+      "img/5.png",
+      "img/6.png",
+      "img/7.png",
+      "img/8.png",
     ];
 
     // ---------------------------
@@ -204,7 +207,6 @@
       const c = document.createElement("canvas");
       const ctx = c.getContext("2d");
 
-      // Tamaño pequeño para que no tape
       const fontSize = 22;
       ctx.font = `600 ${fontSize}px Arial`;
 
@@ -217,18 +219,15 @@
 
       ctx.font = `600 ${fontSize}px Arial`;
 
-      // fondo MUY sutil (casi invisible)
       ctx.fillStyle = "rgba(255,255,255,0.035)";
       roundRect(ctx, 0, 0, c.width, c.height, 14);
       ctx.fill();
 
-      // borde suave
       ctx.strokeStyle = "rgba(255,255,255,0.10)";
       ctx.lineWidth = 2;
       roundRect(ctx, 1, 1, c.width-2, c.height-2, 14);
       ctx.stroke();
 
-      // texto
       ctx.fillStyle = "rgba(255,255,255,0.90)";
       ctx.textBaseline = "middle";
       ctx.fillText(message, paddingX, c.height/2);
@@ -246,7 +245,6 @@
 
       const sprite = new THREE.Sprite(material);
 
-      // Escala pequeña
       const base = 0.055;
       sprite.scale.set(c.width * base, c.height * base, 1);
 
@@ -259,7 +257,6 @@
     PHRASES.forEach((text, idx) => {
       const sprite = makeTextSprite(text);
 
-      // Las ponemos en un anillo para que no se amontonen
       const r = 90 + Math.random() * 140;
       const angle = (idx / PHRASES.length) * Math.PI * 2 + (Math.random() * 0.35);
       const y = (Math.random() - 0.5) * 30;
@@ -270,7 +267,62 @@
         Math.sin(angle) * r
       );
 
+      // guardamos data para flotación suave
+      sprite.userData.baseY = sprite.position.y;
+      sprite.userData.floatSpeed = 0.6 + Math.random() * 0.8;
+      sprite.userData.floatAmp = 0.6 + Math.random() * 1.0;
+
       phraseGroup.add(sprite);
+    });
+
+    // ---------------------------
+    //  FOTO SPRITES (imágenes reales)
+    // ---------------------------
+    const photoGroup = new THREE.Group();
+    galaxy.add(photoGroup);
+
+    const loader = new THREE.TextureLoader();
+    loader.setCrossOrigin("anonymous");
+
+    function makePhotoSprite(url, size = 12){
+      const tex = loader.load(url);
+      tex.minFilter = THREE.LinearFilter;
+      tex.magFilter = THREE.LinearFilter;
+
+      const mat = new THREE.SpriteMaterial({
+        map: tex,
+        transparent: true,
+        opacity: 0.95,
+        depthWrite: false
+      });
+
+      const sprite = new THREE.Sprite(mat);
+      sprite.scale.set(size, size, 1);
+
+      return sprite;
+    }
+
+    // Creamos las fotos en un anillo un poco más cerca que las frases
+    PHOTO_URLS.forEach((url, idx) => {
+      const size = 10 + Math.random() * 6; // tamaño foto (ajustable)
+      const sprite = makePhotoSprite(url, size);
+
+      const r = 70 + Math.random() * 110;
+      const angle = (idx / PHOTO_URLS.length) * Math.PI * 2 + (Math.random() * 0.4);
+      const y = (Math.random() - 0.5) * 26;
+
+      sprite.position.set(
+        Math.cos(angle) * r,
+        y,
+        Math.sin(angle) * r
+      );
+
+      // Datos para movimiento suave
+      sprite.userData.baseY = sprite.position.y;
+      sprite.userData.floatSpeed = 0.7 + Math.random() * 0.7;
+      sprite.userData.floatAmp = 0.8 + Math.random() * 1.4;
+
+      photoGroup.add(sprite);
     });
 
     // ---------------------------
@@ -289,12 +341,10 @@
 
     function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
 
-    // ---------------------------
-    //  Auto-rotation control (PAUSE while dragging)
-    // ---------------------------
+    // Auto-rotation pause control
     let autoRotate = true;
     let lastUserInteraction = performance.now();
-    const RESUME_DELAY = 900; // ms (tiempo para reanudar después de soltar)
+    const RESUME_DELAY = 900;
 
     function markInteraction(){
       lastUserInteraction = performance.now();
@@ -317,11 +367,9 @@
       lastX = x;
       lastY = y;
 
-      // sensibilidad
       targetRotY += dx * 0.005;
       targetRotX += dy * 0.003;
 
-      // límite vertical
       targetRotX = clamp(targetRotX, -0.7, 0.7);
 
       markInteraction();
@@ -358,7 +406,7 @@
       markInteraction();
     }, { passive:true });
 
-    // Pinch zoom (2 dedos)
+    // Pinch zoom
     let lastPinchDist = null;
 
     window.addEventListener("touchmove", (e) => {
@@ -376,7 +424,7 @@
 
       if(lastPinchDist !== null){
         const delta = dist - lastPinchDist;
-        targetZ -= delta * 0.15; // sensibilidad pinch
+        targetZ -= delta * 0.15;
         targetZ = clamp(targetZ, MIN_Z, MAX_Z);
         markInteraction();
       }
@@ -400,21 +448,31 @@
         }
       }
 
-      // Auto-rotación MUY lenta (solo si no estás interactuando)
+      // Auto-rotación MUY lenta (solo si no interactúas)
       if(autoRotate && !isDragging){
-        targetRotY += 0.0006; // velocidad lenta
-        targetRotX += Math.sin(t * 0.2) * 0.00002; // micro movimiento
+        targetRotY += 0.0006;
+        targetRotX += Math.sin(t * 0.2) * 0.00002;
       }
 
-      // No hay rotación automática directa, solo suavizado hacia el target
+      // Suavizado hacia el target
       galaxy.rotation.y += (targetRotY - galaxy.rotation.y) * 0.08;
       galaxy.rotation.x += (targetRotX - galaxy.rotation.x) * 0.08;
 
       // Zoom suave
       camera.position.z += (targetZ - camera.position.z) * 0.12;
 
-      // brillo leve
+      // Brillo leve
       starMat.opacity = 0.92 + Math.sin(t * 1.1) * 0.04;
+
+      // Flotación suave de frases
+      phraseGroup.children.forEach((s) => {
+        s.position.y = s.userData.baseY + Math.sin(t * s.userData.floatSpeed) * s.userData.floatAmp;
+      });
+
+      // Flotación suave de fotos
+      photoGroup.children.forEach((p) => {
+        p.position.y = p.userData.baseY + Math.sin(t * p.userData.floatSpeed) * p.userData.floatAmp;
+      });
 
       renderer.render(scene, camera);
       requestAnimationFrame(animate);
@@ -432,3 +490,4 @@
   </script>
 </body>
 </html>
+
