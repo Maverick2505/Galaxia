@@ -35,6 +35,89 @@
       pointer-events:none;
       background: radial-gradient(circle at center, rgba(0,0,0,0) 45%, rgba(0,0,0,0.55) 100%);
     }
+
+    /* ---------------------------
+       UI Buttons
+    --------------------------- */
+    .ui{
+      position: fixed;
+      right: 12px;
+      bottom: 12px;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+    }
+
+    .ui .panel{
+      pointer-events: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 10px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.10);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 10px 35px rgba(0,0,0,0.35);
+    }
+
+    .ui button{
+      appearance: none;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(0,0,0,0.22);
+      color: rgba(255,255,255,0.92);
+      padding: 10px 12px;
+      border-radius: 14px;
+      font-size: 12px;
+      letter-spacing: 0.2px;
+      cursor: pointer;
+      transition: transform 0.08s ease, background 0.15s ease, border 0.15s ease;
+      user-select: none;
+    }
+
+    .ui button:active{ transform: scale(0.97); }
+
+    .ui button:hover{
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.18);
+    }
+
+    .ui .row{
+      display: flex;
+      gap: 8px;
+    }
+    .ui .row button{ flex: 1; }
+
+    .badge{
+      pointer-events: none;
+      font-size: 11px;
+      opacity: 0.7;
+      text-align: center;
+      padding-top: 4px;
+    }
+
+    /* Botón TE AMO (destacado) */
+    #loveBtn{
+      border: 1px solid rgba(255, 120, 190, 0.35);
+      background: rgba(255, 90, 170, 0.14);
+    }
+    #loveBtn:hover{
+      background: rgba(255, 90, 170, 0.22);
+      border: 1px solid rgba(255, 120, 190, 0.50);
+    }
+
+    @media (max-width: 520px){
+      .ui{
+        right: 10px;
+        bottom: 10px;
+      }
+      .ui button{
+        padding: 10px 10px;
+        font-size: 12px;
+      }
+    }
   </style>
 </head>
 
@@ -47,17 +130,34 @@
   <canvas id="scene"></canvas>
   <div class="vignette"></div>
 
+  <!-- UI Buttons -->
+  <div class="ui">
+    <div class="panel">
+      <div class="row">
+        <button id="zoomIn">Zoom +</button>
+        <button id="zoomOut">Zoom -</button>
+      </div>
+
+      <button id="resetView">Centrar ✨</button>
+      <button id="toggleAuto">Auto: ON</button>
+
+      <button id="loveBtn">TE AMO 💗</button>
+
+      <div class="badge" id="statusText">Modo suave 🌙</div>
+    </div>
+  </div>
+
   <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
 
   <script>
     const canvas = document.getElementById("scene");
 
     const PHRASES = [
-      "Eres mi lugar favorito en el universo ✨",
-      "Contigo, todo se siente posible ⭐",
-      "Tu risa es mi constelación favorita 🌙",
-      "Si me pierdo, que sea en tus ojos 🌌",
-      "Te elegiría incluso sin destino 💫",
+      "Eres mi lugar favorito en el universo",
+      "Contigo, todo se siente posible",
+      "Tu risa es mi constelación favorita",
+      "Si me pierdo, que sea en tus ojos",
+      "Te elegiría incluso sin destino",
       "Tu voz se siente hogar",
       "Siempre tú, en todas partes",
       "Eres mi paz con luces",
@@ -95,7 +195,7 @@
       "Si es contigo, vale todo",
       "Eres mi estrella más brillante",
       "Me haces sentir en casa",
-      "Eres mi mejor parte",
+      "Eres mi mejor amiga",
       "Tú eres mi universo",
       "Te quiero bonito",
       "Me gustas sin medida",
@@ -103,6 +203,7 @@
       "Eres mi magia diaria",
       "Tu amor se siente infinito",
       "Eres mi cielo personal",
+      "Somos colegas para siempre",
     ];
 
     // ---------------------------
@@ -116,7 +217,15 @@
       "img/5.png",
       "img/6.png",
       "img/7.png",
-      "img/8.png",
+      "img/9.png",
+      "img/10.png",
+      "img/11.png",
+      "img/12.png",
+      "img/13.png",
+      "img/14.png",
+      "img/15.png",
+      "img/16png",
+      "img/17.png",
     ];
 
     // ---------------------------
@@ -179,7 +288,7 @@
     const starPoints = new THREE.Points(starGeo, starMat);
     galaxy.add(starPoints);
 
-    // Nebula glow
+    // Nebula glow (vamos a animar su color/opacidad con TE AMO)
     const fogGeo = new THREE.SphereGeometry(320, 32, 32);
     const fogMat = new THREE.MeshBasicMaterial({
       color: 0x4a86ff,
@@ -188,7 +297,8 @@
       blending: THREE.AdditiveBlending,
       side: THREE.BackSide
     });
-    scene.add(new THREE.Mesh(fogGeo, fogMat));
+    const fogMesh = new THREE.Mesh(fogGeo, fogMat);
+    scene.add(fogMesh);
 
     // ---------------------------
     //  Text Sprites (phrases)
@@ -267,7 +377,6 @@
         Math.sin(angle) * r
       );
 
-      // guardamos data para flotación suave
       sprite.userData.baseY = sprite.position.y;
       sprite.userData.floatSpeed = 0.6 + Math.random() * 0.8;
       sprite.userData.floatAmp = 0.6 + Math.random() * 1.0;
@@ -302,9 +411,8 @@
       return sprite;
     }
 
-    // Creamos las fotos en un anillo un poco más cerca que las frases
     PHOTO_URLS.forEach((url, idx) => {
-      const size = 10 + Math.random() * 6; // tamaño foto (ajustable)
+      const size = 10 + Math.random() * 6;
       const sprite = makePhotoSprite(url, size);
 
       const r = 70 + Math.random() * 110;
@@ -317,10 +425,13 @@
         Math.sin(angle) * r
       );
 
-      // Datos para movimiento suave
       sprite.userData.baseY = sprite.position.y;
       sprite.userData.floatSpeed = 0.7 + Math.random() * 0.7;
       sprite.userData.floatAmp = 0.8 + Math.random() * 1.4;
+
+      // Guardamos posición original (para regresar)
+      sprite.userData.homePos = sprite.position.clone();
+      sprite.userData.homeScale = sprite.scale.clone();
 
       photoGroup.add(sprite);
     });
@@ -349,6 +460,7 @@
     function markInteraction(){
       lastUserInteraction = performance.now();
       autoRotate = false;
+      updateToggleText();
     }
 
     function onDown(x, y){
@@ -433,6 +545,142 @@
     }, { passive:true });
 
     // ---------------------------
+    //  UI Buttons logic
+    // ---------------------------
+    const btnZoomIn = document.getElementById("zoomIn");
+    const btnZoomOut = document.getElementById("zoomOut");
+    const btnReset = document.getElementById("resetView");
+    const btnToggle = document.getElementById("toggleAuto");
+    const btnLove = document.getElementById("loveBtn");
+    const statusText = document.getElementById("statusText");
+
+    function updateToggleText(){
+      btnToggle.textContent = autoRotate ? "Auto: ON" : "Auto: OFF";
+      statusText.textContent = autoRotate ? "Modo suave 🌙" : "Modo manual ✋";
+    }
+
+    btnZoomIn.addEventListener("click", () => {
+      targetZ -= 18;
+      targetZ = clamp(targetZ, MIN_Z, MAX_Z);
+      markInteraction();
+    });
+
+    btnZoomOut.addEventListener("click", () => {
+      targetZ += 18;
+      targetZ = clamp(targetZ, MIN_Z, MAX_Z);
+      markInteraction();
+    });
+
+    btnReset.addEventListener("click", () => {
+      targetRotX = 0;
+      targetRotY = 0;
+      targetZ = 150;
+
+      // también regresamos la foto enfocada (si había)
+      focusedPhoto = null;
+      focusLerp = 0;
+
+      lastUserInteraction = performance.now();
+      autoRotate = false;
+      updateToggleText();
+    });
+
+    btnToggle.addEventListener("click", () => {
+      autoRotate = !autoRotate;
+      lastUserInteraction = performance.now();
+      updateToggleText();
+    });
+
+    updateToggleText();
+
+    // ---------------------------
+    //  TE AMO: cambiar cielo (nuevo)
+    // ---------------------------
+    let loveMode = false;
+
+    // Colores para el fog (nebula)
+    const normalFog = new THREE.Color(0x4a86ff);
+    const loveFog = new THREE.Color(0xff4fb1);
+
+    // Para animar transición suave
+    let fogMix = 0; // 0 normal, 1 love
+    let fogTarget = 0;
+
+    btnLove.addEventListener("click", () => {
+      loveMode = !loveMode;
+      fogTarget = loveMode ? 1 : 0;
+
+      btnLove.textContent = loveMode ? "TE AMO 💗 (ON)" : "TE AMO 💗";
+      markInteraction();
+    });
+
+    // ---------------------------
+    //  Click/Tap en fotos = zoom al centro (nuevo)
+    // ---------------------------
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+
+    let focusedPhoto = null;
+    let focusLerp = 0; // 0 = normal, 1 = enfocada
+
+    function setPointerFromEvent(e){
+      const rect = canvas.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width;
+      const y = (e.clientY - rect.top) / rect.height;
+      pointer.x = x * 2 - 1;
+      pointer.y = -(y * 2 - 1);
+    }
+
+    function focusPhoto(sprite){
+      focusedPhoto = sprite;
+      focusLerp = 0; // arrancar transición
+      autoRotate = false;
+      lastUserInteraction = performance.now();
+      updateToggleText();
+
+      // zoom más cerca para verla mejor
+      targetZ = clamp(95, MIN_Z, MAX_Z);
+    }
+
+    function unfocusPhoto(){
+      focusedPhoto = null;
+      focusLerp = 0;
+      targetZ = clamp(150, MIN_Z, MAX_Z);
+    }
+
+    function onTap(e){
+      // si estás arrastrando, no cuenta como tap
+      if(isDragging) return;
+
+      setPointerFromEvent(e);
+
+      raycaster.setFromCamera(pointer, camera);
+      const hits = raycaster.intersectObjects(photoGroup.children, true);
+
+      if(hits.length > 0){
+        const hit = hits[0].object;
+
+        // si tocas la misma foto, se regresa
+        if(focusedPhoto === hit){
+          unfocusPhoto();
+        }else{
+          focusPhoto(hit);
+        }
+        markInteraction();
+      }
+    }
+
+    // Click en PC
+    window.addEventListener("click", (e) => onTap(e));
+
+    // Tap en celular
+    window.addEventListener("touchend", (e) => {
+      if(!e.changedTouches || !e.changedTouches[0]) return;
+      const t = e.changedTouches[0];
+      onTap({ clientX: t.clientX, clientY: t.clientY });
+    }, { passive:true });
+
+    // ---------------------------
     //  Animate
     // ---------------------------
     const clock = new THREE.Clock();
@@ -445,6 +693,7 @@
         const now = performance.now();
         if(now - lastUserInteraction > RESUME_DELAY){
           autoRotate = true;
+          updateToggleText();
         }
       }
 
@@ -474,6 +723,56 @@
         p.position.y = p.userData.baseY + Math.sin(t * p.userData.floatSpeed) * p.userData.floatAmp;
       });
 
+      // ---------
+      // TE AMO: transición suave de cielo (fog)
+      // ---------
+      fogMix += (fogTarget - fogMix) * 0.06;
+
+      // Mezcla color
+      const mixed = normalFog.clone().lerp(loveFog, fogMix);
+      fogMat.color.copy(mixed);
+
+      // Subimos opacidad en modo love
+      const baseFog = 0.05;
+      const extraFog = 0.05;
+      fogMat.opacity = baseFog + extraFog * fogMix;
+
+      // ---------
+      // Focus en foto (zoom al centro)
+      // ---------
+      if(focusedPhoto){
+        // transición suave
+        focusLerp = Math.min(1, focusLerp + 0.03);
+
+        // movemos la foto enfocada al centro
+        const targetPos = new THREE.Vector3(0, 0, 0);
+
+        focusedPhoto.position.lerp(targetPos, 0.10 * focusLerp);
+
+        // la hacemos más grande
+        const bigScale = focusedPhoto.userData.homeScale.clone().multiplyScalar(2.1);
+        focusedPhoto.scale.lerp(bigScale, 0.10 * focusLerp);
+
+        // las demás regresan a su lugar suavemente
+        photoGroup.children.forEach((p) => {
+          if(p === focusedPhoto) return;
+          p.position.lerp(p.userData.homePos, 0.06);
+          p.scale.lerp(p.userData.homeScale, 0.06);
+          p.material.opacity += (0.55 - p.material.opacity) * 0.06;
+        });
+
+        // la enfocada más visible
+        focusedPhoto.material.opacity += (1.0 - focusedPhoto.material.opacity) * 0.08;
+
+      }else{
+        // si no hay foco, todas vuelven a su posición normal
+        photoGroup.children.forEach((p) => {
+          p.position.lerp(p.userData.homePos, 0.06);
+          p.scale.lerp(p.userData.homeScale, 0.06);
+          p.material.opacity += (0.95 - p.material.opacity) * 0.06;
+        });
+      }
+
       renderer.render(scene, camera);
       requestAnimationFrame(animate);
     }
@@ -490,4 +789,3 @@
   </script>
 </body>
 </html>
-
