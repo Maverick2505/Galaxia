@@ -108,6 +108,69 @@
       border: 1px solid rgba(255, 120, 190, 0.50);
     }
 
+    /* -------- CARTA -------- */
+.letter-overlay{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+
+.letter-overlay.show{
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.letter{
+  background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04));
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 20px;
+  padding: 26px 24px;
+  max-width: 520px;
+  width: 90%;
+  max-height: 75vh;
+  overflow-y: auto;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  animation: pop 0.45s ease;
+}
+
+@keyframes pop{
+  from{ transform: scale(0.85); opacity: 0; }
+  to{ transform: scale(1); opacity: 1; }
+}
+
+.letter h2{
+  font-size: 20px;
+  margin-bottom: 14px;
+  color: #ffd9ee;
+}
+
+.letter p{
+  font-size: 14px;
+  line-height: 1.6;
+  opacity: 0.9;
+  margin-bottom: 14px;
+}
+
+.closeLetter{
+  margin-top: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.25);
+  background: rgba(255,90,170,0.2);
+  color: white;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+
+    
     @media (max-width: 520px){
       .ui{
         right: 10px;
@@ -142,10 +205,49 @@
       <button id="toggleAuto">Auto: ON</button>
 
       <button id="loveBtn">TE AMO 💗</button>
+      <button id="openLetter">Abrir carta 💌</button>
+
 
       <div class="badge" id="statusText">Modo suave 🌙</div>
     </div>
   </div>
+
+  <div class="letter-overlay" id="letterOverlay">
+  <div class="letter">
+    <h2>Para ti, mi amor 💖</h2>
+
+<p>
+  Sé que has pasando por días difíciles, y aunque no siempre sepa cómo decirlo,
+  quiero que nunca olvides que no estás sola. Estoy aquí para ti, para sostenerte,
+  para escucharte, para acompañarte y para caminar contigo cada paso, incluso en los
+  momentos más complicados.
+</p>
+
+<p>
+  Todo va a mejorar. Tal vez no de inmediato, tal vez no tan rápido como quisiéramos,
+  pero va a pasar. Y mientras tanto, quiero ser tu apoyo, tu calma y tu lugar seguro.
+  Quiero que sientas que puedes descansar en mí cuando el mundo pese demasiado.
+</p>
+
+<p>
+  Te amo más de lo que las palabras pueden explicar, y prometo recordártelo todos los
+  días, en los buenos y en los no tan buenos. Siempre voy a estar para ti, sin dudar,
+  sin irme, sin soltarte.
+</p>
+
+<p>
+  Gracias por existir, por ser tan fuerte, tan valiente y tan hermosa por dentro y por fuera.
+  Deseo con todo mi corazón pasar muchos 14 de febrero más contigo, crear recuerdos,
+  reírnos de tonterías, abrazarnos fuerte y seguir eligiéndonos todos los días.
+</p>
+
+<p>
+  Te amo princesa, soy tu fan numero 1. 
+</p>
+
+    <button class="closeLetter" id="closeLetter">Cerrar carta ✨</button>
+  </div>
+</div>
 
   <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
 
@@ -785,6 +887,22 @@
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
     });
+
+    // ---------------------------
+//  Carta
+// ---------------------------
+const openLetter = document.getElementById("openLetter");
+const letterOverlay = document.getElementById("letterOverlay");
+const closeLetter = document.getElementById("closeLetter");
+
+openLetter.addEventListener("click", () => {
+  letterOverlay.classList.add("show");
+});
+
+closeLetter.addEventListener("click", () => {
+  letterOverlay.classList.remove("show");
+});
+
   </script>
 </body>
 </html>
